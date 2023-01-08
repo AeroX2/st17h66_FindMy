@@ -117,7 +117,6 @@ SRCS += \
   ./RTE/Device/ARMCM0/startup_ARMCM0.c \
   ./RTE/Device/ARMCM0/system_ARMCM0.c \
   ./source/OSAL_SimpleBLEPeripheral.c \
-  ./source/sbpProfile_ota.c \
   ./source/FindMy.c \
   ./source/SimpleBLEPeripheral_Main.c
 

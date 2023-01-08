@@ -24,10 +24,10 @@ typedef uint8           halDataAlign_t; //!< Used for byte alignment
     #define ALIGN4_INT8     _Alignas(4) int8
     #define ALIGN4_INT16    _Alignas(4) int16
 #else
-    #define ALIGN4_U8       __align(4) uint8
-    #define ALIGN4_U16      __align(4) uint16
-    #define ALIGN4_INT8     __align(4) int8
-    #define ALIGN4_INT16    __align(4) int16
+    #define ALIGN4_U8       __ALIGNED(4) uint8
+    #define ALIGN4_U16      __ALIGNED(4) uint16
+    #define ALIGN4_INT8     __ALIGNED(4) int8
+    #define ALIGN4_INT16    __ALIGNED(4) int16
 #endif
 
 #define    BIT(n)      (1ul << (n))

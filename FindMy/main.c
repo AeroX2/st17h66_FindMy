@@ -99,38 +99,36 @@ volatile sysclk_t g_spif_clk_config;
 extern uint32_t  __initial_sp;
 
 
-static void hal_low_power_io_init(void)
-{
-    //========= pull all io to gnd by default
-	ioinit_cfg_t ioInit[]=
-	{
-		{GPIO_P02,   GPIO_FLOATING   },
-		{GPIO_P03,   GPIO_FLOATING   },
-		{GPIO_P07,   GPIO_FLOATING   },
-		{GPIO_P09,   GPIO_PULL_UP    },
-		{GPIO_P10,   GPIO_PULL_UP    },
-		{GPIO_P11,   GPIO_FLOATING   },
-		{GPIO_P14,   GPIO_FLOATING   },
-		{GPIO_P15,   GPIO_FLOATING   },        
-		{GPIO_P18,   GPIO_FLOATING   },
-		{GPIO_P20,   GPIO_FLOATING   },
-		{GPIO_P34,   GPIO_FLOATING   },
-	#if(SDK_VER_CHIP==__DEF_CHIP_QFN32__)     
-		{GPIO_P00,   GPIO_FLOATING  },
-		{GPIO_P01,   GPIO_FLOATING  },
-		{GPIO_P16,   GPIO_FLOATING  },
-		{GPIO_P17,   GPIO_FLOATING  },
-		{GPIO_P23,   GPIO_FLOATING  },
-		{GPIO_P24,   GPIO_FLOATING  },
-		{GPIO_P25,   GPIO_FLOATING  },
-		{GPIO_P26,   GPIO_FLOATING  },
-		{GPIO_P31,   GPIO_FLOATING  },
-		{GPIO_P32,   GPIO_FLOATING  },
-		{GPIO_P33,   GPIO_FLOATING  },
-	#endif
-	};
+static void hal_low_power_io_init(void) {
+		//========= pull all io to gnd by default
+		ioinit_cfg_t ioInit[] = {
+			{GPIO_P02,   GPIO_FLOATING   },
+			{GPIO_P03,   GPIO_FLOATING   },
+			{GPIO_P07,   GPIO_FLOATING   },
+			{GPIO_P09,   GPIO_PULL_UP    },
+			{GPIO_P10,   GPIO_PULL_UP    },
+			{GPIO_P11,   GPIO_FLOATING   },
+			{GPIO_P14,   GPIO_FLOATING   },
+			{GPIO_P15,   GPIO_FLOATING   },        
+			{GPIO_P18,   GPIO_FLOATING   },
+			{GPIO_P20,   GPIO_FLOATING   },
+			{GPIO_P34,   GPIO_FLOATING   },
+		#if(SDK_VER_CHIP==__DEF_CHIP_QFN32__)     
+			{GPIO_P00,   GPIO_FLOATING  },
+			{GPIO_P01,   GPIO_FLOATING  },
+			{GPIO_P16,   GPIO_FLOATING  },
+			{GPIO_P17,   GPIO_FLOATING  },
+			{GPIO_P23,   GPIO_FLOATING  },
+			{GPIO_P24,   GPIO_FLOATING  },
+			{GPIO_P25,   GPIO_FLOATING  },
+			{GPIO_P26,   GPIO_FLOATING  },
+			{GPIO_P31,   GPIO_FLOATING  },
+			{GPIO_P32,   GPIO_FLOATING  },
+			{GPIO_P33,   GPIO_FLOATING  },
+		#endif
+		};
 
-    for(uint8_t i=0; i<sizeof(ioInit)/sizeof(ioinit_cfg_t); i++)
+    for (uint8_t i=0; i<sizeof(ioInit)/sizeof(ioinit_cfg_t); i++)
         hal_gpio_pull_set(ioInit[i].pin,ioInit[i].type);
 
     DCDC_CONFIG_SETTING(0x0a);
@@ -145,8 +143,7 @@ static void hal_low_power_io_init(void)
 #endif
 }
 
-static void ble_mem_init_config(void)
-{
+static void ble_mem_init_config(void) {
     osal_mem_set_heap((osalMemHdr_t*)g_largeHeap, LARGE_HEAP_SIZE);
     LL_InitConnectContext(pConnContext,
                           g_pConnectionBuffer,
@@ -159,8 +156,7 @@ static void ble_mem_init_config(void)
     #endif
 }
 
-static void hal_rfphy_init(void)
-{
+static void hal_rfphy_init(void) {
     //Watchdog_Init(NULL);
     //============config the txPower
     g_rfPhyTxPower  = RF_PHY_TX_POWER_0DBM ;
@@ -184,8 +180,7 @@ static void hal_rfphy_init(void)
 }
 
 
-static void hal_init(void)
-{
+static void hal_init(void) {
     hal_low_power_io_init();
     clk_init(g_system_clk); //system init
     hal_rtc_clock_config((CLK32K_e)g_clk32K_config);
@@ -201,78 +196,74 @@ static void hal_init(void)
     hal_fs_init(0x1103C000,2);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//#define	FLASH_RfFreOffset_ADD	32
+//#define FLASH_RfFreBaseAddr       0x1103E000
+//static void	rf_DTM_RX_rfoffset_calibration(void) {
+//		uint16	rxEstFoff;
+//		uint16	rxPktNum;
+//		uint8	rxEstRssi;
+//		uint8	rxEstCarrSens;
+//		uint8	rfFreqOffset_flash[64]	=	{0, 0, 0};
 
+//		hal_gpio_pin_init(P10, IE);
+//		hal_gpio_pull_set(P10, PULL_DOWN);
+//		hal_flash_read(FLASH_RfFreBaseAddr, rfFreqOffset_flash, 64);
+//		LOG("read data %x %x %x\n", rfFreqOffset_flash[FLASH_RfFreOffset_ADD], rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1], rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2]);
+//		if (hal_gpio_read(P10) == 1){
+//				while (1) {
+//						if (rfFreqOffset_flash[FLASH_RfFreOffset_ADD] != 0x55) {
+//								rf_phy_dtm_ext_rx_demod_burst(20, 0, 0x09, 37, 1000, 725, &rxEstFoff, &rxEstRssi, &rxEstCarrSens, &rxPktNum);
+//								LOG("rxEsFoff= %d, rxPktNum=%d\n", rxEstFoff,rxPktNum);
+//								if(rxPktNum != 0) {
+//										g_rfPhyFreqOffSet	=	(rxEstFoff-512)/20*5;
+//										if (g_rfPhyFreqOffSet >= 0) {
+//												LOG("P Offset:%d\n", g_rfPhyFreqOffSet);
+//												rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] 	=	1;
+//												rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1]	=	g_rfPhyFreqOffSet;
+//										} else {
+//												LOG("N offset:%d\n", ABS(g_rfPhyFreqOffSet));
+//												rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2]	=	2;
+//												rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1]	=	ABS(g_rfPhyFreqOffSet);
+//										}
+//										
+//										rfFreqOffset_flash[FLASH_RfFreOffset_ADD]	=	0x55;
+//										hal_flash_erase_sector(FLASH_RfFreBaseAddr);
+//										WaitMs(10);
+//										hal_flash_write(FLASH_RfFreBaseAddr, rfFreqOffset_flash, 64);
+//										hal_gpio_fmux(P10, Bit_DISABLE);
+//										hal_gpio_pin_init(P10, OEN);
+//										hal_gpio_write(P10, 0);
+//										hal_flash_read(FLASH_RfFreBaseAddr + FLASH_RfFreOffset_ADD, rfFreqOffset_flash + FLASH_RfFreOffset_ADD, 1);
+//								}
+//						} else {
+//							hal_gpio_fmux(P10, Bit_DISABLE);
+//							hal_gpio_pin_init(P10, OEN);
+//							hal_gpio_write(P10, 0);
+//						}
+//				}
+//		}
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define		FLASH_RfFreOffset_ADD	32
-#define     FLASH_RfFreBaseAddr       0x1103E000
-static	void	rf_DTM_RX_rfoffset_calibration(void)
-{
-	uint16	rxEstFoff;
-	uint16	rxPktNum;
-	uint8	rxEstRssi;
-	uint8	rxEstCarrSens;
-	uint8	rfFreqOffset_flash[64]	=	{0, 0, 0};
-
-	hal_gpio_pin_init(P10, IE);
-	hal_gpio_pull_set(P10, PULL_DOWN);
-	hal_flash_read(FLASH_RfFreBaseAddr, rfFreqOffset_flash, 64);
-	LOG("read data %x %x %x\n", rfFreqOffset_flash[FLASH_RfFreOffset_ADD], rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1], rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2]);
-	if(hal_gpio_read(P10) == 1){
-		while(1){
-			if(rfFreqOffset_flash[FLASH_RfFreOffset_ADD] != 0x55){
-				rf_phy_dtm_ext_rx_demod_burst(20, 0, 0x09, 37, 1000, 725, &rxEstFoff, &rxEstRssi, &rxEstCarrSens, &rxPktNum);
-				LOG("rxEsFoff= %d, rxPktNum=%d\n", rxEstFoff,rxPktNum);
-				if(rxPktNum != 0){
-					g_rfPhyFreqOffSet	=	(rxEstFoff-512)/20*5;
-					if(g_rfPhyFreqOffSet >= 0){
-						LOG("P Offset:%d\n", g_rfPhyFreqOffSet);
-						rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] 	=	1;
-						rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1]	=	g_rfPhyFreqOffSet;
-					}else{
-						LOG("N offset:%d\n", ABS(g_rfPhyFreqOffSet));
-						rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2]	=	2;
-						rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1]	=	ABS(g_rfPhyFreqOffSet);
-					}
-					
-					rfFreqOffset_flash[FLASH_RfFreOffset_ADD]	=	0x55;
-					hal_flash_erase_sector(FLASH_RfFreBaseAddr);
-					WaitMs(10);
-					hal_flash_write(FLASH_RfFreBaseAddr, rfFreqOffset_flash, 64);
-					hal_gpio_fmux(P10, Bit_DISABLE);
-					hal_gpio_pin_init(P10, OEN);
-					hal_gpio_write(P10, 0);
-					hal_flash_read(FLASH_RfFreBaseAddr + FLASH_RfFreOffset_ADD, rfFreqOffset_flash + FLASH_RfFreOffset_ADD, 1);
-				}
-			}else{
-				hal_gpio_fmux(P10, Bit_DISABLE);
-				hal_gpio_pin_init(P10, OEN);
-				hal_gpio_write(P10, 0);
-			}
-		}
-	}
-
-	if(rfFreqOffset_flash[FLASH_RfFreOffset_ADD] == 0x55){
-		if(rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] == 1){
-			g_rfPhyFreqOffSet	=	rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1];
-			LOG("reserved freqoffset : %d\n", g_rfPhyFreqOffSet);
-		}else if(rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] == 2){
-			g_rfPhyFreqOffSet	=	-rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1];
-			// LOG("reserved freqoffset : %d\n", ABS(g_rfPhyFreqOffSet));
-			LOG("reserved freqoffset : %d\n", g_rfPhyFreqOffSet);
-		}else{
-			g_rfPhyFreqOffSet	=	RF_PHY_FREQ_FOFF_40KHZ;
-			LOG("reserved data err\n");
-		}
-	}else{
-		g_rfPhyFreqOffSet	=	RF_PHY_FREQ_FOFF_40KHZ;
-		LOG("no DTM data,default offset is +40KHz\n");
-	}
-}
+//		if (rfFreqOffset_flash[FLASH_RfFreOffset_ADD] == 0x55) {
+//				if (rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] == 1) {
+//						g_rfPhyFreqOffSet	=	rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1];
+//						LOG("reserved freqoffset : %d\n", g_rfPhyFreqOffSet);
+//				} else if(rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 2] == 2) {
+//						g_rfPhyFreqOffSet	=	-rfFreqOffset_flash[FLASH_RfFreOffset_ADD + 1];
+//						// LOG("reserved freqoffset : %d\n", ABS(g_rfPhyFreqOffSet));
+//						LOG("reserved freqoffset : %d\n", g_rfPhyFreqOffSet);
+//				} else {
+//						g_rfPhyFreqOffSet	=	RF_PHY_FREQ_FOFF_40KHZ;
+//						LOG("reserved data err\n");
+//				}
+//		} else {
+//				g_rfPhyFreqOffSet	=	RF_PHY_FREQ_FOFF_40KHZ;
+//				LOG("no DTM data,default offset is +40KHz\n");
+//		}
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-int  main(void)
-{
+int main(void) {
     watchdog_config(WDG_2S);
     g_system_clk = SYS_CLK_XTAL_16M;//SYS_CLK_DBL_32M;//SYS_CLK_XTAL_16M;//SYS_CLK_DLL_64M;
     g_clk32K_config = CLK_32K_RCOSC;//CLK_32K_XTAL;//CLK_32K_XTAL,CLK_32K_RCOSC

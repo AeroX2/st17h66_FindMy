@@ -3,7 +3,7 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-  Filename:       simpleBLEperipheral.h
+  Filename:       FindMy.h
   Revised:         
   Revision:        
 
@@ -13,8 +13,8 @@
  
 **************************************************************************************************/
 
-#ifndef SIMPLEBLEPERIPHERAL_H
-#define SIMPLEBLEPERIPHERAL_H
+#ifndef FINDMY_H
+#define FINDMY_H
 
 #ifdef __cplusplus
 extern "C"
@@ -24,6 +24,7 @@ extern "C"
 /*********************************************************************
  * INCLUDES
  */
+#include <stdint.h>
 
 /*********************************************************************
  * CONSTANTS
@@ -39,8 +40,8 @@ extern "C"
  */
 #define MAC_DATA_LEN							6
 
-extern	uint8	dev_mac_data[MAC_DATA_LEN];
-extern	uint8	simpleBLEPeripheral_TaskID;
+extern uint8_t dev_mac_data[MAC_DATA_LEN];
+extern uint8_t findMy_TaskID;
 /*********************************************************************
  * FUNCTIONS
  */
@@ -48,12 +49,14 @@ extern	uint8	simpleBLEPeripheral_TaskID;
 /*
  * Task Initialization for the BLE Application
  */
-extern void SimpleBLEPeripheral_Init( uint8 task_id );
+extern void FindMy_Init(uint8_t task_id);
 
 /*
  * Task Event Processor for the BLE Application
  */
-extern uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events );
+extern uint16_t FindMy_ProcessEvent(uint8_t task_id, uint16_t events);
+
+extern char* bdAddr2Str(uint8_t* pAddr);
 
 /*********************************************************************
 *********************************************************************/
@@ -62,4 +65,4 @@ extern uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events );
 }
 #endif
 
-#endif /* SIMPLEBLEPERIPHERAL_H */
+#endif /* FINDMY_H */
