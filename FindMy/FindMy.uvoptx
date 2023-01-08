@@ -390,8 +390,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\components\profiles\Roles\broadcaster.c</PathWithFileName>
-      <FilenameWithoutPath>broadcaster.c</FilenameWithoutPath>
+      <PathWithFileName>..\components\profiles\Roles\observer.c</PathWithFileName>
+      <FilenameWithoutPath>observer.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -402,8 +402,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\components\profiles\Roles\observer.c</PathWithFileName>
-      <FilenameWithoutPath>observer.c</FilenameWithoutPath>
+      <PathWithFileName>..\components\profiles\Roles\broadcaster.c</PathWithFileName>
+      <FilenameWithoutPath>broadcaster.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -474,8 +474,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\source\OSAL_SimpleBLEPeripheral.c</PathWithFileName>
-      <FilenameWithoutPath>OSAL_SimpleBLEPeripheral.c</FilenameWithoutPath>
+      <PathWithFileName>.\source\FindMy.c</PathWithFileName>
+      <FilenameWithoutPath>FindMy.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -486,8 +486,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\source\FindMy.c</PathWithFileName>
-      <FilenameWithoutPath>FindMy.c</FilenameWithoutPath>
+      <PathWithFileName>.\source\FindMy_Main.c</PathWithFileName>
+      <FilenameWithoutPath>FindMy_Main.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -498,8 +498,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\source\SimpleBLEPeripheral_Main.c</PathWithFileName>
-      <FilenameWithoutPath>SimpleBLEPeripheral_Main.c</FilenameWithoutPath>
+      <PathWithFileName>.\source\OSAL_FindMy.c</PathWithFileName>
+      <FilenameWithoutPath>OSAL_FindMy.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

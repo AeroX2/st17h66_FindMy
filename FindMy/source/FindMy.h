@@ -32,13 +32,14 @@ extern "C"
 
 
 // Simple BLE Peripheral Task Events
-#define SBP_START_DEVICE_EVT					0x0001
-#define SBP_RESET_ADV_EVT						0x0002
-#define	SBP_DEALDATA							0x0004
+#define SBP_START_DEVICE_EVT	0x0001
+#define SBP_RESET_ADV_EVT			0x0002
+#define	SBP_DEALDATA					0x0004
+#define SBP_PERIODIC_EVT      0x0008
 /*********************************************************************
  * MACROS
  */
-#define MAC_DATA_LEN							6
+#define MAC_DATA_LEN					6
 
 extern uint8_t dev_mac_data[MAC_DATA_LEN];
 extern uint8_t findMy_TaskID;
@@ -55,8 +56,6 @@ extern void FindMy_Init(uint8_t task_id);
  * Task Event Processor for the BLE Application
  */
 extern uint16_t FindMy_ProcessEvent(uint8_t task_id, uint16_t events);
-
-extern char* bdAddr2Str(uint8_t* pAddr);
 
 /*********************************************************************
 *********************************************************************/

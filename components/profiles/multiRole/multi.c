@@ -1131,9 +1131,9 @@ static void MultiRole_PeripheralstartConnUpdate( uint8 idx,uint8 handleFailure )
     updateReq.intervalMax = desired_max_interval;
     updateReq.slaveLatency = desired_slave_latency;
     updateReq.timeoutMultiplier = desired_conn_timeout;
-    uint16 connHandle = multiLinkStatusGetSlaveConnHandle( idx );
-    LOG("idx %d,connHandle %d\n",idx,connHandle);
-    L2CAP_ConnParamUpdateReq( connHandle, &updateReq, gapMultiRole_TaskID );
+    //uint16 connHandle = multiLinkStatusGetSlaveConnHandle( idx );
+    //LOG("idx %d,connHandle %d\n",idx,connHandle);
+    //L2CAP_ConnParamUpdateReq( connHandle, &updateReq, gapMultiRole_TaskID );
     multitimer_init(&g_pcu_no_success_timer[idx], MultiRole_HandleParamUpdateNoSuccess, \
                     timeout, 0,idx);
     multitimer_start(&g_pcu_no_success_timer[idx]);

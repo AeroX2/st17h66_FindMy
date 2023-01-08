@@ -34,21 +34,12 @@
 #include "osal_cbtimer.h"
 #endif
 
-/* L2CAP */
-//#include "l2cap.h"
-
 /* gap */
 #include "gap.h"
-//#include "gapgattserver.h"
-//#include "gapbondmgr.h"
-
-/* GATT */
-//#include "gatt.h"
-//#include "gattservapp.h"
 
 /* Profiles */
-#include "observer.h"
 #include "broadcaster.h"
+#include "observer.h"
 
 /* Application */
 #include "FindMy.h"
@@ -102,7 +93,7 @@ void osalInitTasks(void) {
 	
     GAP_Init(taskID++);
     GAPRole_Init(taskID++);
-		GAPObserverRole_Init( taskID++ );
+	  GAPObserverRole_Init(taskID++);
 		
     /* Application */
     FindMy_Init(taskID++);
