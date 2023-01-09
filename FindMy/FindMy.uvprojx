@@ -474,16 +474,6 @@
               <FileType>1</FileType>
               <FilePath>..\components\profiles\Roles\gap.c</FilePath>
             </File>
-            <File>
-              <FileName>observer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\profiles\Roles\observer.c</FilePath>
-            </File>
-            <File>
-              <FileName>broadcaster.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\profiles\Roles\broadcaster.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -528,6 +518,11 @@
               <FileName>OSAL_FindMy.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\source\OSAL_FindMy.c</FilePath>
+            </File>
+            <File>
+              <FileName>Multi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\source\Multi.c</FilePath>
             </File>
           </Files>
         </Group>
