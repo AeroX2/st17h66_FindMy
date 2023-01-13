@@ -32,10 +32,11 @@ extern "C"
 
 
 // Simple BLE Peripheral Task Events
-#define SBP_START_DEVICE_EVT	0x0001
-#define SBP_RESET_ADV_EVT			0x0002
-#define	SBP_DEALDATA					0x0004
-#define SBP_PERIODIC_EVT      0x0008
+#define SBP_START_DEVICE_EVT  0x0001
+#define SBP_START_ADVERTISING 0x0002
+#define	SBP_START_DISCOVERY   0x0004
+#define	SBP_START_BEEP        0x0008
+#define	SBP_BEEP_TICK         0x0010
 /*********************************************************************
  * MACROS
  */

@@ -16,6 +16,7 @@ application
  * INCLUDES
  */
 #include <stdio.h>
+#include <string.h>
 
 #include "bcomdef.h"
 #include "OSAL.h"
@@ -26,6 +27,7 @@ application
 
 #include "hci.h"
 #include "hci_tl.h"
+#include "pwm.h"
 
 #include "gap.h"
 #include "gapbondmgr.h"
@@ -35,44 +37,26 @@ application
 #include "ll_def.h"
 
 #include "pwrmgr.h"
+#include "flash.h"
+#include "key.h"
 
 #include "Multi.h"
 #include "FindMy.h"
-#include "flash.h"
 
 /*********************************************************************
  * CONSTANTS
  */
-#define DEFAULT_CONN_MIN_INTV 40
-
-// Slave latency to use if automatic parameter update request is enabled
-#define DEFAULT_UPDATE_SLAVE_LATENCY 0
-
-// Supervision timeout value (units of 10ms) if automatic parameter update
-// request is enabled
-#define DEFAULT_UPDATE_CONN_TIMEOUT 200
-
 // Maximum number of scan responses
 #define DEFAULT_MAX_SCAN_RES 8
 
 // Scan duration in ms
-#define DEFAULT_SCAN_DURATION 4000
+#define DEFAULT_SCAN_DURATION 1000
 
-// Discovey mode (limited, general, all)
+// Advertisement duration in ms
+#define DEFAULT_ADVERTISING_DURATION 10000
+
+// Discovery mode (limited, general, all)
 #define DEFAULT_DISCOVERY_MODE DEVDISC_MODE_ALL
-
-//#define DEFAULT_DISCOVERABLE_MODE GAP_ADTYPE_FLAGS_GENERAL
-
-// Minimum connection interval (units of 1.25ms, 80=100ms) if automatic
-// parameter update request is enabled
-//#define DEFAULT_DESIRED_MIN_CONN_INTERVAL 8 //32//80
-
-// Maximum connection interval (units of 1.25ms, 800=1000ms) if automatic
-// parameter update request is enabled
-//#define DEFAULT_DESIRED_MAX_CONN_INTERVAL 16 //48//800
-
-// Connection Pause Peripheral time value (in seconds)
-//#define DEFAULT_CONN_PAUSE_PERIPHERAL 6
 
 /*********************************************************************
  * build define
@@ -101,10 +85,10 @@ perStatsByChan_t g_perStatsByChanTest;
 uint8 findMy_TaskID;  // Task ID for internal task/event processing
 
 uint8 devMacData[MAC_DATA_LEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static uint8 publicKey[] = {0x85, 0x23, 0xd8, 0x8f, 0x1a, 0xbf, 0xf6,
-                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xef,
-                            0xfe, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88,
-                            0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11};
+static uint8 publicKey[] = {0x3a, 0x8f, 0xbe, 0xcc, 0x04, 0x36, 0xba,
+                            0x88, 0x42, 0x05, 0x8b, 0x7b, 0xd2, 0x5f,
+                            0xa9, 0x06, 0x16, 0x23, 0x38, 0x22, 0x2d,
+                            0xff, 0x9d, 0xde, 0xef, 0x17, 0xf1, 0xb1};
 
 void setAddrFromKey(uint8* devMacData, uint8* publicKey) {
   devMacData[0] = publicKey[0] | 0xc0;
@@ -141,10 +125,14 @@ static uint8 advertData[] = {
     /* Hint (0x00) */
 };
 
+pwm_ch_t pwmCh;
+int beepCount = 1000;
+
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static void findMy_AdvInit();
+static void findMy_advInit();
+static void findMy_keyPressEvt(uint8_t i, key_evt_t keyEvt);
 static void findMy_processOSALMsg(osal_event_hdr_t* pMsg);
 static void findMy_broadcasterEventCB(gaprole_States_t newState);
 static void findMy_observerEventCB(gapObserverRoleEvent_t* pEvent);
@@ -187,18 +175,31 @@ static const gapObserverRoleCB_t findMy_ObserverCBs = {
 void FindMy_Init(uint8 task_id) {
   findMy_TaskID = task_id;
 
-  // Setup GAP
-  // GAP_SetParamValue(TGAP_GEN_DISC_SCAN, DEFAULT_SCAN_DURATION);
-  // GAP_SetParamValue(TGAP_LIM_DISC_SCAN, DEFAULT_SCAN_DURATION);
+  pwmCh.pwmN = PWM_CH0;
+  pwmCh.pwmPin = P9;
+  pwmCh.pwmDiv = PWM_CLK_NO_DIV;
+  pwmCh.pwmMode = PWM_CNT_UP;
+  pwmCh.pwmPolarity = PWM_POLARITY_FALLING;
 
+  key_state.key[0].pin = P15;
+  for (int i = 0; i < HAL_KEY_NUM; i++) {
+    key_state.key[i].state = HAL_STATE_KEY_IDLE;
+    key_state.key[i].idle_level = HAL_LOW_IDLE;
+  }
+
+  key_state.task_id = findMy_TaskID;
+  key_state.key_callbank = findMy_keyPressEvt;
+  key_init();
+	
   // Setup Observer Profile
+  GAP_SetParamValue(TGAP_GEN_DISC_SCAN, DEFAULT_SCAN_DURATION);
+  GAP_SetParamValue(TGAP_LIM_DISC_SCAN, DEFAULT_SCAN_DURATION);
   uint8 scanRes = DEFAULT_MAX_SCAN_RES;
-  LOG("GAPOBSERVERROLE_MAX_SCAN_RES %d\n",
-      GAPMultiRole_SetParameter(GAPOBSERVERROLE_MAX_SCAN_RES, sizeof(uint8),
-                                &scanRes));
+  GAPMultiRole_SetParameter(GAPOBSERVERROLE_MAX_SCAN_RES, sizeof(uint8),
+                            &scanRes);
 
   // Setup advertising data
-  findMy_AdvInit();
+  findMy_advInit();
 
   // Setup a delayed profile startup
   osal_set_event(findMy_TaskID, SBP_START_DEVICE_EVT);
@@ -206,10 +207,11 @@ void FindMy_Init(uint8 task_id) {
   // for receive HCI complete message
   GAP_RegisterForHCIMsgs(findMy_TaskID);
   LL_PLUS_PerStats_Init(&g_perStatsByChanTest);
+
   LOG("=====findMy_Init Done=======\n");
 }
 
-void findMy_AdvInit() {
+void findMy_advInit() {
   setAddrFromKey(devMacData, publicKey);
   setPayloadFromKey(advertData, publicKey);
 
@@ -219,19 +221,13 @@ void findMy_AdvInit() {
                                              // GAP_ADTYPE_ADV_NONCONN_IND =
                                              // 0x03
   uint8 peerPublicAddr[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-
-  LOG("GAPROLE_ADV_EVENT_TYPE %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADV_EVENT_TYPE, sizeof(uint8),
-                                &advType));
-  LOG("GAPROLE_ADV_DIRECT_ADDR %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADV_DIRECT_ADDR, sizeof(peerPublicAddr),
-                                peerPublicAddr));
+  GAPMultiRole_SetParameter(GAPROLE_ADV_EVENT_TYPE, sizeof(uint8), &advType);
+  GAPMultiRole_SetParameter(GAPROLE_ADV_DIRECT_ADDR, sizeof(peerPublicAddr),
+                            peerPublicAddr);
 
   // set adv channel map
   uint8 advChnMap = GAP_ADVCHAN_37 | GAP_ADVCHAN_38 | GAP_ADVCHAN_39;
-  LOG("GAPROLE_ADV_CHANNEL_MAP %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADV_CHANNEL_MAP, sizeof(uint8),
-                                &advChnMap));
+  GAPMultiRole_SetParameter(GAPROLE_ADV_CHANNEL_MAP, sizeof(uint8), &advChnMap);
 
   // Set the GAP Role Parameters
   // device starts advertising upon initialization
@@ -241,24 +237,43 @@ void findMy_AdvInit() {
   // being discoverable for 30.72 second, and will not being advertising again
   // until the enabler is set back to TRUE
   uint16 gapRole_AdvertOffTime = 0;
-  LOG("GAPROLE_ADVERT_ENABLED %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
-                                &initialAdvertisingEnable));
-  LOG("GAPROLE_ADVERT_OFF_TIME %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADVERT_OFF_TIME, sizeof(uint16),
-                                &gapRole_AdvertOffTime));
-  LOG("GAPROLE_ADVERT_DATA %d\n",
-      GAPMultiRole_SetParameter(GAPROLE_ADVERT_DATA, sizeof(advertData),
-                                advertData));
+  GAPMultiRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
+                            &initialAdvertisingEnable);
+  GAPMultiRole_SetParameter(GAPROLE_ADVERT_OFF_TIME, sizeof(uint16),
+                            &gapRole_AdvertOffTime);
+  GAPMultiRole_SetParameter(GAPROLE_ADVERT_DATA, sizeof(advertData),
+                            advertData);
 
   // Set advertising interval
   uint16 advInt = 5000;  /// 1600;//2400;//1600;//1600;//800;//1600;   // actual
                          /// time = advInt * 625us
-
+  GAP_SetParamValue(TGAP_GEN_DISC_ADV_MIN, DEFAULT_ADVERTISING_DURATION);
   GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MIN, advInt);
   GAP_SetParamValue(TGAP_LIM_DISC_ADV_INT_MAX, advInt);
   GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MIN, advInt);
   GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MAX, advInt);
+}
+
+void findMy_keyPressEvt(uint8_t i, key_evt_t keyEvt) {
+  switch (keyEvt) {
+    case HAL_KEY_EVT_PRESS:
+      break;
+
+    case HAL_KEY_EVT_RELEASE:
+      LOG("Release\n");
+      beepCount = 1000;
+      osal_stop_timerEx(findMy_TaskID, SBP_BEEP_TICK);
+      break;
+
+    case HAL_KEY_EVT_LONG_RELEASE:
+      LOG("Long release\n");
+      //beepCount = 1000;
+      //osal_set_event(findMy_TaskID, SBP_START_BEEP);
+      break;
+
+    default:
+      break;
+  }
 }
 
 /*********************************************************************
@@ -276,84 +291,97 @@ void findMy_AdvInit() {
  * @return  events not processed
  */
 uint16 FindMy_ProcessEvent(uint8 task_id, uint16 events) {
-  /*if (events & SYS_EVENT_MSG) {
-      uint8* pMsg;
-
-      if ((pMsg = osal_msg_receive(findMy_TaskID)) != NULL) {
-          findMy_processOSALMsg((osal_event_hdr_t*) pMsg);
-
-          // Release the OSAL message
-          osal_msg_deallocate(pMsg);
+  if (events & HAL_KEY_EVENT) {
+    for (uint8 i = 0; i < HAL_KEY_NUM; ++i) {
+      if ((key_state.temp[i].in_enable == TRUE) ||
+          (key_state.key[i].state == HAL_STATE_KEY_RELEASE_DEBOUNCE)) {
+        gpio_key_timer_handler(i);
       }
+    }
 
-      // return unprocessed events
-      return (events ^ SYS_EVENT_MSG);
-  }*/
+    return (events ^ HAL_KEY_EVENT);
+  }
 
   if (events & SBP_START_DEVICE_EVT) {
-    uint8 numConns;
     LOG("Device is starting up\n");
     // Start the Device
-    LOG("Multi %d\n",
-        GAPMultiRole_StartDevice(&findMy_BroadcasterCBs,
-                                 (gapObserverRoleCB_t*)&findMy_ObserverCBs));
+    GAPMultiRole_StartDevice(&findMy_BroadcasterCBs,
+                             (gapObserverRoleCB_t*)&findMy_ObserverCBs);
 
-    // Do a scan after a few seconds
-    osal_start_timerEx(findMy_TaskID, SBP_PERIODIC_EVT, 5000);
-
-    HCI_LE_ReadResolvingListSizeCmd();
+    // Do a scan
+    GAPMultiRole_StartDiscovery(DEFAULT_DISCOVERY_MODE, false, false);
 
     return (events ^ SBP_START_DEVICE_EVT);
   }
 
-  // enable adv
-  if (events & SBP_RESET_ADV_EVT) {
-    LOG("Enabling advertisment\n");
-    uint8 advertisementEnable = TRUE;
-    LOG("GAPROLE_ADVERT_ENABLED %d\n",
-        GAPMultiRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
-                                  &advertisementEnable));
-    return (events ^ SBP_RESET_ADV_EVT);
+  if (events & SBP_START_ADVERTISING) {
+    LOG("Advertising!\n");
+    GAPMultiRole_CancelDiscovery();
+
+    uint8 advertisementEnable = true;
+    GAPMultiRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
+                              &advertisementEnable);
+    return (events ^ SBP_START_ADVERTISING);
   }
 
-  if (events & SBP_PERIODIC_EVT) {
-    LOG("Timer event!\n");
-    LOG("Return %d\n",
-        GAPMultiRole_StartDiscovery(DEFAULT_DISCOVERY_MODE, false, false));
+  if (events & SBP_START_DISCOVERY) {
+    uint8 advertisementEnable = false;
+    GAPMultiRole_SetParameter(GAPROLE_ADVERT_ENABLED, sizeof(uint8),
+                              &advertisementEnable);
+
+    LOG("Discovering!\n");
+    GAPMultiRole_StartDiscovery(DEFAULT_DISCOVERY_MODE, false, false);
+    return (events ^ SBP_START_DISCOVERY);
+  }
+
+  if (events & SBP_START_BEEP) {
+    if (beepCount >= 1000) {
+      beepCount = 0;
+
+      osal_set_event(findMy_TaskID, SBP_BEEP_TICK);
+    }
+
+    return (events ^ SBP_START_BEEP);
+  }
+
+  if (events & SBP_BEEP_TICK) {
+    beepCount++;
+
+    int soundCount = beepCount % 100;
+    if (soundCount == 0) {
+      int z = 16000000 / 2730;
+      pwmCh.cntTopVal = z;
+      pwmCh.cmpVal = z / 2;
+      hal_pwm_ch_start(pwmCh);
+    } else if (soundCount == 10) {
+      hal_pwm_ch_stop(pwmCh);
+    } else if (soundCount == 10 + 5) {
+      int z = 16000000 / 3000;
+      pwmCh.cntTopVal = z;
+      pwmCh.cmpVal = z / 2;
+      hal_pwm_ch_start(pwmCh);
+    } else if (soundCount == 10 + 5 + 10) {
+      hal_pwm_ch_stop(pwmCh);
+    } else if (soundCount == 10 + 5 + 10 + 5) {
+      int z = 16000000 / 2730;
+      pwmCh.cntTopVal = z;
+      pwmCh.cmpVal = z / 2;
+      hal_pwm_ch_start(pwmCh);
+    } else if (soundCount == 10 + 5 + 10 + 5 + 10) {
+      hal_pwm_ch_stop(pwmCh);
+    }
+
+    if (beepCount >= 1000) {
+      hal_pwm_ch_stop(pwmCh);
+    } else {
+      osal_start_timerEx(findMy_TaskID, SBP_BEEP_TICK, 10);
+    }
+    return (events ^ SBP_BEEP_TICK);
   }
 
   // Discard unknown events
   return 0;
 }
-
-/*********************************************************************
- * @fn      findMy_ProcessOSALMsg
- *
- * @brief   Process an incoming task message.
- *
- * @param   pMsg - message to process
- *
- * @return  none
- */
-/*static void findMy_processOSALMsg(osal_event_hdr_t* pMsg) {
-    hciEvt_CmdComplete_t* pHciMsg;
-
-    switch (pMsg->event) {
-                                case HCI_GAP_EVENT_EVENT: {
-                                                switch (pMsg->status) {
-                                                                case
-HCI_COMMAND_COMPLETE_EVENT_CODE:
-                                                                                pHciMsg = (hciEvt_CmdComplete_t*) pMsg;
-                                                                                LOG("==> HCI_COMMAND_COMPLETE_EVENT_CODE: %x\n", pHciMsg->cmdOpcode);
-                                                                                //safeToDealloc = gapProcessHCICmdCompleteEvt( (hciEvt_CmdComplete_t *)pMsg );
-                                                                                break;
-                                                                default:
-                                                                                //safeToDealloc = FALSE;  // Send to app
-                                                                                break;
-                                                }
-                                }
-    }
-}*/
 
 /*********************************************************************
  * @fn      findMy_broadcasterEventCB
@@ -372,10 +400,12 @@ static void findMy_broadcasterEventCB(gaprole_States_t newState) {
       for (uint8 i = 0; i < LL_DEVICE_ADDR_LEN; i++) {
         ownPublicAddr[i] = devMacData[LL_DEVICE_ADDR_LEN - 1 - i];
       }
-
-      LOG("Starting to advertise\n");
-      osal_set_event(findMy_TaskID, SBP_RESET_ADV_EVT);
     } break;
+
+    case GAPROLE_WAITING:
+      LOG("Waiting\n");
+      osal_set_event(findMy_TaskID, SBP_START_DISCOVERY);
+      break;
 
     case GAPROLE_ADVERTISING:
       LOG("Advertising\n");
@@ -412,6 +442,9 @@ static void findMy_observerEventCB(gapObserverRoleEvent_t* pEvent) {
         LOG("%d ", pEvent->deviceInfo.pEvtData[i]);
       }
       LOG("\n");
+      if (strstr((char*)pEvent->deviceInfo.pEvtData, "find me plz") != NULL) {
+        osal_set_event(findMy_TaskID, SBP_START_BEEP);
+      }
       break;
 
     case GAP_DEVICE_DISCOVERY_EVENT:
@@ -420,7 +453,7 @@ static void findMy_observerEventCB(gapObserverRoleEvent_t* pEvent) {
         uint8* addr = pEvent->discCmpl.pDevList[i].addr;
         LOG("Addr: %s\n", addr2Str(addr));
       }
-      osal_start_timerEx(findMy_TaskID, SBP_PERIODIC_EVT, 20000);
+      osal_set_event(findMy_TaskID, SBP_START_ADVERTISING);
       break;
 
     default:

@@ -52,9 +52,6 @@ static uint8 gapMultiRoleTaskId;
     descriptions
 */
 
-// static uint8  gapObserverRoleBdAddr[B_ADDR_LEN];
-/// static uint8  gapObserverRoleMaxScanRes = 0;
-
 /*********************************************************************
     LOCAL FUNCTIONS
 */
@@ -148,8 +145,8 @@ bStatus_t GAPMultiRole_CancelDiscovery() {
 */
 void GAPMultiRole_Init(uint8 taskId) {
   gapMultiRoleTaskId = taskId;
-  GAPRole_Init(taskId);
   GAPObserverRole_Init(taskId);
+  GAPRole_Init(taskId);
 }
 
 /**
@@ -213,8 +210,8 @@ uint16 GAPMultiRole_ProcessEvent(uint8 taskId, uint16 events) {
 static void gapMultiRole_ProcessOSALMsg(osal_event_hdr_t* pMsg) {
   switch (pMsg->event) {
     case GAP_MSG_EVENT:
-      gapRole_ProcessGAPMsg((gapEventHdr_t*)pMsg);
       gapObserverRole_ProcessGAPMsg((gapEventHdr_t*)pMsg);
+      gapRole_ProcessGAPMsg((gapEventHdr_t*)pMsg);
       break;
 
     default:
