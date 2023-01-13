@@ -436,23 +436,23 @@ static void findMy_observerEventCB(gapObserverRoleEvent_t* pEvent) {
       break;
 
     case GAP_DEVICE_INFO_EVENT:
-      LOG("BLE Observer info event\n");
+      /*LOG("BLE Observer info event\n");
       LOG("Data: ");
       for (int i = 0; i < pEvent->deviceInfo.dataLen; i++) {
         LOG("%d ", pEvent->deviceInfo.pEvtData[i]);
       }
-      LOG("\n");
+      LOG("\n");*/
       if (strstr((char*)pEvent->deviceInfo.pEvtData, "find me plz") != NULL) {
         osal_set_event(findMy_TaskID, SBP_START_BEEP);
       }
       break;
 
     case GAP_DEVICE_DISCOVERY_EVENT:
-      LOG("BLE Observer info event\n");
+      /*LOG("BLE Observer info event\n");
       for (int i = 0; i < pEvent->discCmpl.numDevs; i++) {
         uint8* addr = pEvent->discCmpl.pDevList[i].addr;
         LOG("Addr: %s\n", addr2Str(addr));
-      }
+      }*/
       osal_set_event(findMy_TaskID, SBP_START_ADVERTISING);
       break;
 
