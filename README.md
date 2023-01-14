@@ -1,6 +1,11 @@
 # st17h66_FindMy
 Firmware for Lenze ST17h66 that advertises to the Apple Find My network, based on SDK v3.1.1.2
 
+# AeroX2 Changes
+- Long clicking and releasing activates the buzzer
+- Short click stops the buzzer
+- Beacon finds nearby Bluetooth advertisements and looks for a particular code, if found the buzzer goes off.
+
 ## Compile
 To compile this firmware either arm-none-eabi-gcc and CMSIS headers, or Keil uVision are required. The GCC path does not work yet, so use Keil.
 
