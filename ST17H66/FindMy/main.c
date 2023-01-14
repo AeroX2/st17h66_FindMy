@@ -109,7 +109,7 @@ static void hal_low_power_io_init(void) {
 			{GPIO_P10,   GPIO_PULL_UP    },
 			{GPIO_P11,   GPIO_FLOATING   },
 			{GPIO_P14,   GPIO_FLOATING   },
-			{GPIO_P15,   GPIO_FLOATING  },        
+			{GPIO_P15,   GPIO_FLOATING   },        
 			{GPIO_P18,   GPIO_FLOATING   },
 			{GPIO_P20,   GPIO_FLOATING   },
 			{GPIO_P34,   GPIO_FLOATING   },

@@ -85,10 +85,14 @@ perStatsByChan_t g_perStatsByChanTest;
 uint8 findMy_TaskID;  // Task ID for internal task/event processing
 
 uint8 devMacData[MAC_DATA_LEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static uint8 publicKey[] = {0x3a, 0x8f, 0xbe, 0xcc, 0x04, 0x36, 0xba,
+/*static uint8 publicKey[] = {0x3a, 0x8f, 0xbe, 0xcc, 0x04, 0x36, 0xba,
                             0x88, 0x42, 0x05, 0x8b, 0x7b, 0xd2, 0x5f,
                             0xa9, 0x06, 0x16, 0x23, 0x38, 0x22, 0x2d,
-                            0xff, 0x9d, 0xde, 0xef, 0x17, 0xf1, 0xb1};
+                            0xff, 0x9d, 0xde, 0xef, 0x17, 0xf1, 0xb1};*/
+static uint8 publicKey[] = {0x5d, 0x46, 0xe1, 0xac, 0xcd, 0x59, 0x14, 0x3c,
+                            0x30, 0x7e, 0x75, 0xe4, 0xfe, 0x93, 0x79, 0x8e,
+                            0xcd, 0x1a, 0x32, 0x49, 0xf3, 0x4a, 0xce, 0xfa,
+                            0x72, 0x31, 0x01, 0x79, 0x0b, 0x2c, 0x2e, 0x14};
 
 void setAddrFromKey(uint8* devMacData, uint8* publicKey) {
   devMacData[0] = publicKey[0] | 0xc0;
@@ -190,7 +194,7 @@ void FindMy_Init(uint8 task_id) {
   key_state.task_id = findMy_TaskID;
   key_state.key_callbank = findMy_keyPressEvt;
   key_init();
-	
+
   // Setup Observer Profile
   GAP_SetParamValue(TGAP_GEN_DISC_SCAN, DEFAULT_SCAN_DURATION);
   GAP_SetParamValue(TGAP_LIM_DISC_SCAN, DEFAULT_SCAN_DURATION);
@@ -263,12 +267,13 @@ void findMy_keyPressEvt(uint8_t i, key_evt_t keyEvt) {
       LOG("Release\n");
       beepCount = 1000;
       osal_stop_timerEx(findMy_TaskID, SBP_BEEP_TICK);
+      hal_pwm_ch_stop(pwmCh);
       break;
 
     case HAL_KEY_EVT_LONG_RELEASE:
       LOG("Long release\n");
-      //beepCount = 1000;
-      //osal_set_event(findMy_TaskID, SBP_START_BEEP);
+      beepCount = 1000;
+      osal_set_event(findMy_TaskID, SBP_START_BEEP);
       break;
 
     default:
