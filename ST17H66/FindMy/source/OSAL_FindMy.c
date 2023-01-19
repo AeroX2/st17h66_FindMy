@@ -23,10 +23,6 @@
 /* LL */
 #include "ll.h"
 
-/* HAL */
-//#include "hal_types.h"
-//#include "hal_drivers.h"
-
 /* HCI */
 #include "hci_tl.h"
 
@@ -34,11 +30,19 @@
 #include "osal_cbtimer.h"
 #endif
 
-/* gap */
+/* L2CAP */
+#include "l2cap.h"
+
+/* GAP */
 #include "gap.h"
 
+/* GATT */
+#include "gatt.h"
+#include "gattservapp.h"
+
 /* Profiles */
-#include "Multi.h"
+#include "gapbondmgr.h"
+#include "peripheral.h"
 
 /* Application */
 #include "FindMy.h"
@@ -55,9 +59,14 @@ const pTaskEventHandlerFn tasksArr[] = {
 #if defined(OSAL_CBTIMER_NUM_TASKS)
     OSAL_CBTIMER_PROCESS_EVENT(osal_CbTimerProcessEvent),  // task 3
 #endif
-    GAP_ProcessEvent,           // task 4
-    GAPMultiRole_ProcessEvent,  // task 5
-    FindMy_ProcessEvent,        // task 6
+		L2CAP_ProcessEvent,
+		SM_ProcessEvent,
+    GAP_ProcessEvent,
+		GATT_ProcessEvent,
+    GAPRole_ProcessEvent,
+    // GAPBondMgr_ProcessEvent,
+    GATTServApp_ProcessEvent,
+    FindMy_ProcessEvent,
 };
 
 const uint8 tasksCnt = sizeof(tasksArr) / sizeof(tasksArr[0]);
@@ -84,18 +93,30 @@ void osalInitTasks(void) {
   LL_Init(taskID++);
   /* HCI Task */
   HCI_Init(taskID++);
-#if defined(OSAL_CBTIMER_NUM_TASKS)
-  /* Callback Timer Tasks */
-  osal_CbTimerInit(taskID);
-  taskID += OSAL_CBTIMER_NUM_TASKS;
-#endif
-
-  GAP_Init(taskID++);
-  GAPMultiRole_Init(taskID++);
+	#if defined(OSAL_CBTIMER_NUM_TASKS)
+	/* Callback Timer Tasks */
+	osal_CbTimerInit(taskID);
+	taskID += OSAL_CBTIMER_NUM_TASKS;
+	#endif
+	/* L2CAP Task */
+	L2CAP_Init(taskID++);
+	/* SM Task */
+	SM_Init(taskID++);
+	/* GAP Task */
+	GAP_Init(taskID++);
+	/* GATT Task */
+	GATT_Init(taskID++);
+	/* Profiles */
+	GAPRole_Init(taskID++);
+	/* Bond manager */
+	// GAPBondMgr_Init(taskID++);
+	/* GATT Serv */
+	GATTServApp_Init(taskID++);
 
   /* Application */
   FindMy_Init(taskID++);
 }
 #endif
 /*********************************************************************
+>>>>>>> Stashed changes
  *********************************************************************/

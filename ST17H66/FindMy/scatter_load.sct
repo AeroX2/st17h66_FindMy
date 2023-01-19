@@ -30,25 +30,19 @@ LR_ROM_JT_GC  0x1fff0000 0x00800 {
  } 
 LR_ROM_XIP  0x11020000 0x020000 {
   ER_ROM_XIP 0x11020000 0x020000  {  ; load address = execution address
+   gatt*.o(+RO)
+   gattservapp.o(+RO)
    l2cap*.o(+RO)
    att*.o(+RO)
    linkdb.o(+RO)
    sm*.o(+RO)
    gap*.o(+RO)
-   ;peripheral.o(+RO)
-   ;observer.o(+RO)
-   ;broadcaster.o(+RO)
-   multi.o(+RO)
+   peripheral.o(+RO)
    findmy.o(+RO)
-   ;led_light.o(+RO)
    pwm.o(+RO)
-   ;key.o(+RO)
+   key.o(+RO)
    my_printf.o(+RO)
    gpio.o(+RO)
-   ;osal_snv.o(+RO)
    *.o(_section_xip_code_)
   }
  }  
-
-
-

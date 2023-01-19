@@ -37,7 +37,7 @@ extern void hal_rom_boot_init(void);
 #define   BLE_MAX_ALLOW_CONNECTION              1
 #define   BLE_MAX_ALLOW_PKT_PER_EVENT_TX        3
 #define   BLE_MAX_ALLOW_PKT_PER_EVENT_RX        3
-#define   BLE_PKT_VERSION                       BLE_PKT_VERSION_4_0 //BLE_PKT_VERSION_5_1     
+#define   BLE_PKT_VERSION                       BLE_PKT_VERSION_5_1     
 
 
 /*  BLE_MAX_ALLOW_PER_CONNECTION
@@ -103,13 +103,13 @@ static void hal_low_power_io_init(void) {
 		//========= pull all io to gnd by default
 		ioinit_cfg_t ioInit[] = {
 			{GPIO_P02,   GPIO_FLOATING   },
-			{GPIO_P03,   GPIO_FLOATING   },
-			{GPIO_P07,   GPIO_PULL_DOWN  },
-			{GPIO_P09,   GPIO_PULL_UP    },
-			{GPIO_P10,   GPIO_PULL_UP    },
+			{GPIO_P03,   GPIO_PULL_DOWN   },
+			{GPIO_P07,   GPIO_FLOATING  },
+			{GPIO_P09,   GPIO_PULL_DOWN    },
+			{GPIO_P10,   GPIO_PULL_DOWN    },
 			{GPIO_P11,   GPIO_FLOATING   },
 			{GPIO_P14,   GPIO_FLOATING   },
-			{GPIO_P15,   GPIO_FLOATING   },        
+			{GPIO_P15,   GPIO_PULL_DOWN   },        
 			{GPIO_P18,   GPIO_FLOATING   },
 			{GPIO_P20,   GPIO_FLOATING   },
 			{GPIO_P34,   GPIO_FLOATING   },
@@ -121,10 +121,10 @@ static void hal_low_power_io_init(void) {
     DCDC_CONFIG_SETTING(0x0a);
     DCDC_REF_CLK_SETTING(1);
     DIG_LDO_CURRENT_SETTING(0x01);
-//    hal_pwrmgr_RAM_retention(RET_SRAM0|RET_SRAM1|RET_SRAM2);	
-		hal_pwrmgr_RAM_retention(RET_SRAM0);/// ?迄?Y那米?那車|車?㏒???谷迄sram
-    // hal_pwrmgr_RAM_retention(RET_SRAM0);
+		
+    hal_pwrmgr_RAM_retention(RET_SRAM0|RET_SRAM1);	
     hal_pwrmgr_RAM_retention_set();
+		hal_pwrmgr_LowCurrentLdo_enable();
 }
 
 static void ble_mem_init_config(void) {
@@ -138,7 +138,6 @@ static void ble_mem_init_config(void) {
 }
 
 static void hal_rfphy_init(void) {
-    //Watchdog_Init(NULL);
     //============config the txPower
     g_rfPhyTxPower = RF_PHY_TX_POWER_0DBM ;
     //============config BLE_PHY TYPE
@@ -148,8 +147,6 @@ static void hal_rfphy_init(void) {
     //============config xtal 16M cap
     XTAL16M_CAP_SETTING(0x09);
     XTAL16M_CURRENT_SETTING(0x01);
-
-    hal_rc32k_clk_tracking_init();
     
     hal_rom_boot_init();
     NVIC_SetPriority((IRQn_Type)BB_IRQn,    IRQ_PRIO_REALTIME);
@@ -166,14 +163,13 @@ static void hal_init(void) {
     clk_init(g_system_clk); //system init
     hal_rtc_clock_config((CLK32K_e)g_clk32K_config);
     hal_pwrmgr_init();
-    xflash_Ctx_t cfg =
-    {
-        .spif_ref_clk   =   SYS_CLK_RC_32M,
-        .rd_instr       =   XFRD_FCMD_READ_DUAL
+    xflash_Ctx_t cfg = {
+      .spif_ref_clk = SYS_CLK_RC_32M,
+      .rd_instr = XFRD_FCMD_READ_DUAL
     };
     hal_spif_cache_init(cfg);
 	
-    //LOG_INIT();
+    // LOG_INIT();
     hal_gpio_init();
 		hal_pwm_module_init();
     hal_fs_init(0x1103C000,2);
@@ -181,9 +177,9 @@ static void hal_init(void) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
-    watchdog_config(WDG_2S);
-    g_system_clk = SYS_CLK_XTAL_16M;//SYS_CLK_DBL_32M;//SYS_CLK_XTAL_16M;//SYS_CLK_DLL_64M;
-    g_clk32K_config = CLK_32K_RCOSC;//CLK_32K_XTAL;//CLK_32K_XTAL,CLK_32K_RCOSC
+    // watchdog_config(WDG_2S);
+    g_system_clk = SYS_CLK_XTAL_16M; //SYS_CLK_DBL_32M;//SYS_CLK_XTAL_16M;//SYS_CLK_DLL_64M;
+    g_clk32K_config = CLK_32K_RCOSC; //CLK_32K_XTAL;//CLK_32K_XTAL,CLK_32K_RCOSC
 
     drv_irq_init();
     init_config();
@@ -203,22 +199,3 @@ int main(void) {
 
 
 /////////////////////////////////////  end  ///////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

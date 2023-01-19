@@ -34,16 +34,12 @@ extern "C"
 // Simple BLE Peripheral Task Events
 #define SBP_START_DEVICE_EVT  0x0001
 #define SBP_START_ADVERTISING 0x0002
-#define	SBP_START_DISCOVERY   0x0004
-#define	SBP_START_BEEP        0x0008
-#define	SBP_BEEP_TICK         0x0010
+#define	SBP_START_BEEP        0x0004
+#define	SBP_BEEP_TICK         0x0008
 /*********************************************************************
  * MACROS
  */
-#define MAC_DATA_LEN					6
 
-extern uint8_t dev_mac_data[MAC_DATA_LEN];
-extern uint8_t findMy_TaskID;
 /*********************************************************************
  * FUNCTIONS
  */
